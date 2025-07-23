@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Git Checkout') {
             steps {
-               git branch: 'main', credentialsId: 'git-cred', url: 'https://github.com/ganeshperumal007/Boardgame.git'
+               git branch: 'main', url: 'https://github.com/shrivathsa04/Boardgame.git'
             }
         }
         
@@ -57,20 +57,44 @@ pipeline {
                sh "mvn package"
             }
         }
+        stage('Install JFrog CLI') {
+    steps {
+        sh '''
+            curl -fL https://getcli.jfrog.io | sh
+            chmod +x jfrog
+            sudo mv jfrog /usr/local/bin/
+            jfrog --version
+        '''
+    }
+}
+
         
-        stage('Publish To Nexus') {
-            steps {
-               withMaven(globalMavenSettingsConfig: 'global-settings', jdk: 'jdk17', maven: 'maven3', mavenSettingsConfig: '', traceability: true) {
-                    sh "mvn deploy"
-                }
-            }
+        stage('Publish To JFrog') {
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'jfrog-credentials', usernameVariable: 'JFROG_USER', passwordVariable: 'JFROG_PASS')]) {
+            sh '''
+                jfrog rt config --interactive=false \
+                  --url=https://44.201.113.53:8082/artifactory \
+                  --user=$JFROG_USER \
+                  --password=$JFROG_PASS \
+                  --server-id=my-jfrog
+
+                jfrog rt mvn "clean install deploy" \
+                  --server-id=my-jfrog \
+                  --build-name=boardgame-build \
+                  --build-number=$BUILD_NUMBER
+            '''
         }
+    }
+        }
+        
+
         
         stage('Build & Tag Docker Image') {
             steps {
                script {
                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                            sh "docker build -t ganeshperumal007/boardshack:latest ."
+                            sh "docker build -t shrivathsa04/boardshack:latest ."
                     }
                }
             }
@@ -78,7 +102,7 @@ pipeline {
         
         stage('Docker Image Scan') {
             steps {
-                sh "trivy image --format table -o trivy-image-report.html ganeshperumal007/boardshack:latest "
+                sh "trivy image --format table -o trivy-image-report.html shrivathsa04/boardshack:latest "
             }
         }
         
@@ -86,7 +110,7 @@ pipeline {
             steps {
                script {
                    withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                            sh "docker push ganeshperumal007/boardshack:latest"
+                            sh "docker push shrivathsa04/boardshack:latest"
                     }
                }
             }
@@ -144,5 +168,4 @@ pipeline {
         }
     }
 }
-
 }
