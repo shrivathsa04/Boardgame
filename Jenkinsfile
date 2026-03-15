@@ -104,6 +104,10 @@ pipeline {
             git config --global user.email "jenkins@example.com"
             git config --global user.name "jenkins"
 
+            git config --global credential.helper store
+
+            echo https://$GIT_USER:$GIT_TOKEN@github.com > ~/.git-credentials
+
             git clone https://github.com/shrivathsa04/boardshack-helm.git
             cd boardshack-helm/boardgame
 
@@ -111,9 +115,6 @@ pipeline {
 
             git add values.yaml
             git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes"
-
-            git config credential.helper store
-            echo "https://$GIT_USER:$GIT_TOKEN@github.com" > ~/.git-credentials
 
             git push origin main
             '''
