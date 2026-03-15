@@ -95,23 +95,25 @@ pipeline {
                 }
             }
         }
-        stage('Update Helm Chart') {
-        steps {
-        script {
-            sh '''
-            git config --global user.email "jenkins@example.com"
-            git config --global user.name "jenkins"
+       stage('Update Helm Chart') {
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
+            script {
+                sh '''
+                git config --global user.email "jenkins@example.com"
+                git config --global user.name "jenkins"
 
-            git clone https://github.com/shrivathsa04/boardshack-helm.git
-            cd boardshack-helm/boardgame
+                git clone https://github.com/shrivathsa04/boardshack-helm.git
+                cd boardshack-helm/boardgame
 
-            sed -i "s/tag:.*/tag: ${BUILD_NUMBER}/" values.yaml
+                sed -i "s/tag:.*/tag: ${BUILD_NUMBER}/" values.yaml
 
-            git add values.yaml
-            git commit -m "Update image tag to ${BUILD_NUMBER}"
+                git add values.yaml
+                git commit -m "Update image tag to ${BUILD_NUMBER}" || echo "No changes"
 
-            git push https://${GIT_USER}:${GIT_TOKEN}@github.com/shrivathsa04/boardshack-helm.git
-            '''
+                git push https://${GIT_USER}:${GIT_TOKEN}@github.com/shrivathsa04/boardshack-helm.git
+                '''
+            }
         }
     }
 }
