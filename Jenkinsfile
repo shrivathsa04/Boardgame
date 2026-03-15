@@ -100,6 +100,7 @@ pipeline {
         withCredentials([usernamePassword(credentialsId: 'github-cred', usernameVariable: 'GIT_USER', passwordVariable: 'GIT_TOKEN')]) {
             script {
                 sh '''
+                rm -rf boardshack-helm
                 git config --global user.email "jenkins@example.com"
                 git config --global user.name "jenkins"
 
