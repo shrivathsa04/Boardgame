@@ -74,7 +74,7 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker build -t shrivathsa04/boardshack:latest ."
+                        sh "docker build -t shrivathsa04/boardshack:${BUILD_NUMBER} ."
                     }
                 }
             }
@@ -82,7 +82,7 @@ pipeline {
 
         stage('Docker Image Scan') {
             steps {
-                sh "trivy image --format table -o trivy-image-report.html shrivathsa04/boardshack:latest"
+                sh "trivy image --format table -o trivy-image-report.html shrivathsa04/boardshack:${BUILD_NUMBER}"
             }
         }
 
