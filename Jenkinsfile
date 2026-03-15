@@ -90,11 +90,31 @@ pipeline {
             steps {
                 script {
                     withDockerRegistry(credentialsId: 'docker-cred', toolName: 'docker') {
-                        sh "docker push shrivathsa04/boardshack:latest"
+                        sh "docker push shrivathsa04/boardshack:${BUILD_NUMBER}"
                     }
                 }
             }
         }
+        stage('Update Helm Chart') {
+        steps {
+        script {
+            sh '''
+            git config --global user.email "jenkins@example.com"
+            git config --global user.name "jenkins"
+
+            git clone https://github.com/shrivathsa04/boardshack-helm.git
+            cd boardshack-helm/boardgame
+
+            sed -i "s/tag:.*/tag: ${BUILD_NUMBER}/" values.yaml
+
+            git add values.yaml
+            git commit -m "Update image tag to ${BUILD_NUMBER}"
+
+            git push https://${GIT_USER}:${GIT_TOKEN}@github.com/shrivathsa04/boardshack-helm.git
+            '''
+        }
+    }
+}
     }
 
     post {
